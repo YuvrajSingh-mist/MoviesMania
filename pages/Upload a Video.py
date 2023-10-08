@@ -253,7 +253,7 @@ def wait():
 
     #Loading the word2vec model.pkl file
 
-    file_name = 'word2vec_model (copy).pkl'
+    file_name = 'word2vec_model.pkl'
     open_file = open(file_name, 'rb')
     word2vec_model = pickle.load(open_file)
     open_file.close()
@@ -946,9 +946,9 @@ def wait():
 
         bar = st.progress(0)
         
-        tabs_titles = ['Movie', 'Sentiment Analysis of Reviews!', 'Spoiler Free Reviews']
+        tabs_titles = ['Movie', 'Sentiment Analysis of Reviews!']
         
-        tab2, tab3, tab4 = st.tabs(tabs_titles)
+        tab2, tab3 = st.tabs(tabs_titles)
         
      
         with tab2:
@@ -1018,15 +1018,15 @@ def wait():
                 #Data
                 st.dataframe(neg_df, height=250, width=1000, hide_index=True)
         
-        with tab4:
-            if st.checkbox('Show'):
-                gc.collect()
-                spoiler = load_model_spoiler()
-                reviews_and_title['tags'] = reviews_and_title['Review'] + reviews_and_title['Title']
+        # with tab4:
+            # if st.checkbox('Show'):
+                # gc.collect()
+                # spoiler = load_model_spoiler()
+                # reviews_and_title['tags'] = reviews_and_title['Review'] + reviews_and_title['Title']
                 
-                #Preprocessing
-                reviews_and_title['tags2'] = reviews_and_title['tags']
-                preprocess_spoilers('tags')
+                # Preprocessing
+                # reviews_and_title['tags2'] = reviews_and_title['tags']
+                # preprocess_spoilers('tags')
                 # reviews_and_title['tags'] = reviews_and_title['tags'].str.lower()
                 # reviews_and_title['tags'] = reviews_and_title['tags'].apply(remove_at_the_rate_and_mentions)
                 # reviews_and_title['tags'] = reviews_and_title['tags'].apply(remove_contradictions)
@@ -1036,44 +1036,44 @@ def wait():
                 # reviews_and_title['tags'] = reviews_and_title['tags'].apply(remove_url)
                 # reviews_and_title['tags'] = reviews_and_title['tags'].apply(Lemmetization)
                 
-                padded_revs = padding()
+                # padded_revs = padding()
                 
-                yhat = spoiler.predict([padded_revs], batch_size=1024)
-                y_pred = np.where(yhat > 0.02, 1, 0)
+                # yhat = spoiler.predict([padded_revs], batch_size=1024)
+                # y_pred = np.where(yhat > 0.02, 1, 0)
                 
-                spoiler_true=[]
-                spoiler_false=[]
+                # spoiler_true=[]
+                # spoiler_false=[]
                 
-                predict = list(enumerate(y_pred))
-                for i in predict:
-                    if i[1] == 1:
-                        spoiler_true.append(i)
-                    elif i[1] == 0:
-                        spoiler_false.append(i)
-                fetch_corresponding_reviews(spoiler_true, spoiler_false)
+                # predict = list(enumerate(y_pred))
+                # for i in predict:
+                    # if i[1] == 1:
+                        # spoiler_true.append(i)
+                    # elif i[1] == 0:
+                        # spoiler_false.append(i)
+                # fetch_corresponding_reviews(spoiler_true, spoiler_false)
                 
                 
-                with st.expander("All Reviews"):
+                # with st.expander("All Reviews"):
             
 
                      
-                    st.dataframe(reviews_and_title, height=250, width=1000, hide_index=True)
+                    # st.dataframe(reviews_and_title, height=250, width=1000, hide_index=True)
 
 
                 
-                with st.expander("Spoiler Free Reviews"):
+                # with st.expander("Spoiler Free Reviews"):
                 
-                        #Data
-                        spoiler_free_df = pos_df      
-                        st.dataframe(spoiler_free_df, height=250, width=1000, hide_index=True)
+                        # Data
+                        # spoiler_free_df = pos_df      
+                        # st.dataframe(spoiler_free_df, height=250, width=1000, hide_index=True)
          
                 
-                with st.expander("May contain Spoiler "):
+                # with st.expander("May contain Spoiler "):
                     
                     
-                        #Data
-                        spoiler_df = neg_df     
-                        st.dataframe(spoiler_df, height=250, width=1000, hide_index=True)
+                        # Data
+                        # spoiler_df = neg_df     
+                        # st.dataframe(spoiler_df, height=250, width=1000, hide_index=True)
 
                 
         # with tab4:
@@ -1153,82 +1153,89 @@ else:
     
 if st.checkbox("Already downloaded a video file through the 'Downloads' tab"):
 
-        
-        vf = cv2.VideoCapture("videos/video")
-        v_len = int(vf.get(cv2.CAP_PROP_FRAME_COUNT))
+        if st.checkbox("Proceed with processing"):
+            vf = cv2.VideoCapture("videos/video")
+            v_len = int(vf.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
-        mtcnn = MTCNN(margin=20, keep_all=True, post_process=False)
+            mtcnn = MTCNN(margin=20, keep_all=True, post_process=False)
 
-        batch_size = 8
-        frames = []
+            batch_size = 8
+            frames = []
 
-        count=0
-        wait()
-        for _ in tqdm(range(v_len)):
+            count=0
+            wait()
+            for _ in tqdm(range(v_len)):
 
 
-            success, frame = vf.read()
-            if not success:
-                continue
+                success, frame = vf.read()
+                if not success:
+                    continue
 
-            # Add to batch, resizing for speed
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = Image.fromarray(frame)
-            #frame = frame.resize([int(f * 0.5) for f in frame.size])
-            frames.append(frame)
-            count+=1
+                # Add to batch, resizing for speed
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = Image.fromarray(frame)
+                #frame = frame.resize([int(f * 0.5) for f in frame.size])
+                frames.append(frame)
+                count+=1
 
-            if len(frames) >= batch_size:
+                if len(frames) >= batch_size:
 
-                # Batch
+                    # Batch
 
-                    
-                save_paths = [f'extracted_images_mtcnn_pytorch_new/image_{count}.jpg' for i in range(len(frames))]
-                mtcnn(frames, save_path=save_paths);
+                        
+                    save_paths = [f'extracted_images_mtcnn_pytorch_new/image_{count}.jpg' for i in range(len(frames))]
+                    mtcnn(frames, save_path=save_paths);
 
-                frames = []
-                
+                    frames = []
+     
+        if st.checkbox("Fetch reviews!"):
+            wait()
+
+st.divider()            
                 
 if st.checkbox("To upload a video file"):
     f = st.file_uploader('Here')
-    wait()
-    if f is not None:
-        tfile = tempfile.NamedTemporaryFile(delete=False)
-        tfile.write(f.read())
-        vf = cv2.VideoCapture(tfile.name)
-        v_len = int(vf.get(cv2.CAP_PROP_FRAME_COUNT))
+    if st.checkbox("Proceed with processing"):
+        if f is not None:
+            tfile = tempfile.NamedTemporaryFile(delete=False)
+            tfile.write(f.read())
+            vf = cv2.VideoCapture(tfile.name)
+            v_len = int(vf.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
-        mtcnn = MTCNN(margin=20, keep_all=True, post_process=False)
+            mtcnn = MTCNN(margin=20, keep_all=True, post_process=False)
 
-        batch_size = 8
-        frames = []
+            batch_size = 8
+            frames = []
 
-        count=0
-        for _ in tqdm(range(v_len)):
+            count=0
+            for _ in tqdm(range(v_len)):
 
 
-            success, frame = vf.read()
-            if not success:
-                continue
+                success, frame = vf.read()
+                if not success:
+                    continue
 
-            # Add to batch, resizing for speed
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = Image.fromarray(frame)
-            #frame = frame.resize([int(f * 0.5) for f in frame.size])
-            frames.append(frame)
-            count+=1
+                # Add to batch, resizing for speed
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = Image.fromarray(frame)
+                #frame = frame.resize([int(f * 0.5) for f in frame.size])
+                frames.append(frame)
+                count+=1
 
-            if len(frames) >= batch_size:
+                if len(frames) >= batch_size:
 
-                # Batch
+                    # Batch
 
-                    
-                save_paths = [f'extracted_images_mtcnn_pytorch_new/image_{count}.jpg' for i in range(len(frames))]
-                mtcnn(frames, save_path=save_paths);
+                        
+                    save_paths = [f'extracted_images_mtcnn_pytorch_new/image_{count}.jpg' for i in range(len(frames))]
+                    mtcnn(frames, save_path=save_paths);
 
-                frames = []
+                    frames = []
+    
+    if st.checkbox("Fetch reviews!"):
+        wait()
             
 clean()
 
